@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from typing import Optional, List
+import datetime
 
 app = FastAPI() 
 
@@ -12,6 +13,14 @@ class Movie(BaseModel):
     year: int
     rating: float
     category: str
+
+class CreateMovie(BaseModel):
+    id: int #Optional[int] = None o se puede declarar id: int | None = None
+    title: str = Field(min_length=5, max_length=15,default="My movie") 
+    overview: str = Field(min_length=5, max_length=15) #Valido condiciones de los datos
+    year: int = Field(le=datetime.date.today().year) # el año debe ser menor o igual al año actual
+    rating: float = Field(ge=0, le=10)
+    category: str = Field(min_length=5, max_length=20)
 
 class MovieUpdate(BaseModel):
     title: str
@@ -75,7 +84,7 @@ def get_movie_by_category(category: str, year: int) -> Movie:
 
 @app.post('/movies', tags=['Movies']) # método post - ruta /movies
 
-def create_movie(movie: Movie) -> List[Movie]: #parámetro movie del tipo Movie (clase creada)
+def create_movie(movie: CreateMovie) -> List[Movie]: #parámetro movie del tipo Movie (clase creada)
     movies.append(movie.dict()) #añadimos movie y lo convertimos en dict que es lo que requiere el método append
     return movies
 
