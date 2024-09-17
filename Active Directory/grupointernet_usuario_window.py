@@ -2,7 +2,7 @@ from ldap3 import Server, Connection, NTLM
 from tkinter import *
 
 #DC Server
-server = Server("garrahan.gov.ar") 
+server = Server("domain") 
 
 window = Tk()
 
@@ -11,8 +11,8 @@ def consulta():
     flag = 0
     
     try:
-        with Connection(server, user="{}\\{}".format("garrahan.gov.ar", "conector_2"), password="P3rfy20!", authentication=NTLM) as conn:
-            conn.search("dc=garrahan,dc=gov,dc=ar", "(&(sAMAccountName={}))".format(entry_value.get()),
+        with Connection(server, user="{}\\{}".format("domain", "user"), password="password", authentication=NTLM) as conn:
+            conn.search("dc=xxxx,dc=xxxx,dc=xxxxx", "(&(sAMAccountName={}))".format(entry_value.get()),
                     attributes=['memberOf'])
             entry = conn.entries
         
