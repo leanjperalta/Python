@@ -1,5 +1,5 @@
 from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD
-from conn_creds import *
+from vars.conn_creds import *
 
 # User details
 new_user_name = "John"
