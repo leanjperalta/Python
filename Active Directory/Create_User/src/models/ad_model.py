@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 
-
 class User(BaseModel):
-    new_user_name: str #Optional[int] = None o se puede declarar id: int | None = None
+    new_user_name: str 
     new_user_lastname: str
     
 class UserCreate(BaseModel):
