@@ -3,6 +3,7 @@ from fastapi import Path, Query, APIRouter, HTTPException
 from ..models.ad_model import UserCreate #llamada al modelo UserCreate
 from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD
 from ..vars.conn_creds import *
+import string, random
 
 aduser_router = APIRouter() #este router va a contener la ruta para crear un usuario
 
@@ -10,23 +11,36 @@ aduser_router = APIRouter() #este router va a contener la ruta para crear un usu
 def create_user(user: UserCreate):
     try:
         server = Server(server_name, get_info=ALL)
-
         conn = Connection(server, user=f'{domain_name}\\{admin_user}', password=admin_password, authentication=NTLM)
-        
         
         if not conn.bind():
             raise Exception(f"Failed to bind to LDAP server: {conn.result}")
 
+        #seteo canonical name (no lo uso como atributo)
         cn_user=f"{user.new_user_name} {user.new_user_lastname}"
+        #seteo sAMAccountname
         sam_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}"
+        #seteo UserPrincipalName
         pn_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
+        #seteo casilla del usuario
         mail_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
 
+        #seteo distinguished name
         dn = f"CN={cn_user},{base_dn}"
-        #creo los atributos del usuario
-        userpassword = 'garra123'
+
+        user_exists = conn.search(dn, '(objectClass=user)', attributes=['*'])
+        if user_exists:
+            raise HTTPException(status_code=500, detail=f"LDAP error: El objeto ya existe")
+        
+
+        
+        #genero un password random de 8 char (letras, numeros y puntuación)
+        password_length = 8
+        password_characters = string.ascii_letters + string.digits + string.punctuation
+        userpassword = ''.join(random.choice(password_characters) for _ in range(password_length))
         enc_pwd = '"{}"'.format(userpassword).encode('utf-16-le')
 
+        #creo los atributos del usuario
         attrs = {
             'objectClass': ['User', 'posixAccount', 'top'],
             #'cn': cn_user,
@@ -44,15 +58,17 @@ def create_user(user: UserCreate):
         conn.extend.microsoft.modify_password(dn, enc_pwd)
         conn.modify(dn, {'userAccountControl': [('MODIFY_REPLACE', 512)]})
 
+        # lo agrego al grupo Domain Users, vía dn
         domain_users_dn = f"CN=Domain Users,CN=Users,{','.join(base_dn.split(',')[1:])}"
-        domain_group_dn = f"CN=Internet-General,{','.join(base_dn.split(',')[1:])}"
         conn.extend.microsoft.add_members_to_groups(dn, domain_users_dn)
+        # lo agrego al grupo Internet-General, vía dn
+        domain_group_dn = f"CN=Internet-General,{','.join(base_dn.split(',')[1:])}"
         conn.extend.microsoft.add_members_to_groups(dn, domain_group_dn)
 
         # Desconecto del servidor
         conn.unbind()
 
-        return {"message": f"User {user.new_user_name} created successfully"}
+        return {"message": f"Usuaria/o {user.new_user_name} {user.new_user_lastname} creada/o satisfactoriamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LDAP error: {str(e)}")
 
