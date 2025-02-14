@@ -1,14 +1,14 @@
 from fastapi import FastAPI
-from src.routers.ad_router import aduser_router
+from src.routers import ad_router
 
 app = FastAPI() 
 
-@app.get('/', tags=['Home']) # método get - ruta /
+#@app.get('/', tags=['Home']) # método get - ruta /
 
-def home():
-    return "Nada para hacer aqui"
+#def home():
+#    return "Nada para hacer aqui"
 
-app.include_router(prefix="/aduser", router=aduser_router) #llama las rutas aduser a través de aduser_router (APIRouter), e indico el prefijo
+app.include_router(ad_router.aduser_router) #llama las rutas aduser a través de aduser_router (APIRouter), e indico el prefijo
 
 if __name__ == '__main__':
     import uvicorn

@@ -34,7 +34,7 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         #seteo distinguished name
         dn = f"CN={cn_user},{base_dn}"
 
-        user_exists = conn.search(dn, '(objectClass=user)', attributes=['*'])
+        user_exists = conn.search(dn, '(objectClass=user)', attributes=['*']) ## Validacion borrar
         if user_exists:
             raise HTTPException(status_code=500, detail=f"LDAP error: El objeto ya existe")
         
@@ -77,5 +77,3 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         return {"message": f"Usuaria/o {user.new_user_name} {user.new_user_lastname} creada/o satisfactoriamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LDAP error: {str(e)}")
-
-
