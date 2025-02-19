@@ -8,7 +8,7 @@ app = FastAPI()
 #def home():
 #    return "Nada para hacer aqui"
 
-app.include_router(ad_router.aduser_router) #llama las rutas aduser a través de aduser_router (APIRouter), e indico el prefijo
+app.include_router(ad_router.aduser_router) #llama las rutas aduser a través de aduser_router (APIRouter)
 
 if __name__ == '__main__':
     import uvicorn
