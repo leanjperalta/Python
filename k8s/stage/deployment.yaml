@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: create-user-api
+  namespace: stage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: create-user-api
+  template:
+    metadata:
+      labels:
+        app: create-user-api
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/leanjperalta/python-create-user-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: LP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: lp_pass
