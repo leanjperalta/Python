@@ -33,15 +33,17 @@ jobs:
         with:
           repository: leanjperalta/k8
           token: ${{ secrets.K8_REPO_PAT }}  # PAT Updated as secret
+          path: k8
       - name: Debug Directory Structure
         run: |
           pwd
           ls -R
-          cat LDAP_Api/dev/deployment.yaml || echo "Cannot read deployment.yaml"
+          cat k8/LDAP_Api/dev/deployment.yaml || echo "Cannot read deployment.yaml"
       - name: Verify yq Installation
         run: |
           yq --version || echo "yq not installed"
       - name: Update Manifest with New Image
+        working-directory: k8
         run: |
           yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' LDAP_Api/dev/deployment.yaml
           git config --global user.name "GitHub Actions"
