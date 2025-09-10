@@ -86,4 +86,3 @@ jobs:
       - name: Inject Secret
         run: |
           kubectl create secret generic api-secrets --namespace=prod --from-literal=lp_pass="${{ secrets.LP_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
-```
