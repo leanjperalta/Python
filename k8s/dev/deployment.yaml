@@ -14,13 +14,13 @@ spec:
         app: create-user-api
     spec:
       containers:
-      - name: api
-        image: ghcr.io/leanjperalta/python-create-user-api:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: LP_PASS
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: lp_pass
+        - name: api
+          image: ghcr.io/leanjperalta/python-create-user-api:fc7fdccee237880de6484b821831d6db9aa63739
+          ports:
+            - containerPort: 8000
+          env:
+            - name: LP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: lp_pass
