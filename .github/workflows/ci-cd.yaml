@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for LDAP_API
+name: CI/CD Pipeline LDAP_API
 
 on:
   push:
@@ -27,21 +27,16 @@ jobs:
     runs-on: self-hosted
     environment: dev
     steps:
-      - uses: actions/checkout@v4  # Defaults to leanjperalta/Python
-      - name: Debug Directory Structure
-        run: |
-          pwd
-          ls -R
-          cat k8s/dev/deployment.yaml || echo "Cannot read deployment.yaml"
-      - name: Verify yq Installation
-        run: |
-          yq --version || echo "yq not installed"
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: true
       - name: Update Manifest with New Image
         run: |
-          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' k8s/dev/deployment.yaml
+          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' $GITHUB_WORKSPACE/k8s/dev/deployment.yaml
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add k8s/dev/deployment.yaml
+          git add $GITHUB_WORKSPACE/k8s/dev/deployment.yaml
           git commit -m "Update dev image to ${{ github.sha }}" || echo "No changes"
           git push
       - name: Inject Secret
@@ -54,20 +49,18 @@ jobs:
     environment: stage
     steps:
       - uses: actions/checkout@v4
-      - name: Debug Directory Structure
+        with:
+          ref: main
+          clean: true
+      - name: Sync with Remote Branch
         run: |
-          pwd
-          ls -R
-          cat k8s/stage/deployment.yaml || echo "Cannot read deployment.yaml"
-      - name: Verify yq Installation
-        run: |
-          yq --version || echo "yq not installed"
-      - name: Update Manifest with New Image
-        run: |
-          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' k8s/stage/deployment.yaml
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add k8s/stage/deployment.yaml
+          git pull --rebase origin main
+      - name: Update Manifest with New Image
+        run: |
+          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' $GITHUB_WORKSPACE/k8s/stage/deployment.yaml
+          git add $GITHUB_WORKSPACE/k8s/stage/deployment.yaml
           git commit -m "Update stage image to ${{ github.sha }}" || echo "No changes"
           git push
       - name: Inject Secret
@@ -80,20 +73,18 @@ jobs:
     environment: prod
     steps:
       - uses: actions/checkout@v4
-      - name: Debug Directory Structure
+        with:
+          ref: main
+          clean: true
+      - name: Sync with Remote Branch
         run: |
-          pwd
-          ls -R
-          cat k8s/prod/deployment.yaml || echo "Cannot read deployment.yaml"
-      - name: Verify yq Installation
-        run: |
-          yq --version || echo "yq not installed"
-      - name: Update Manifest with New Image
-        run: |
-          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' k8s/prod/deployment.yaml
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add k8s/prod/deployment.yaml
+          git pull --rebase origin main
+      - name: Update Manifest with New Image
+        run: |
+          yq e -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ github.repository_owner }}/python-create-user-api:${{ github.sha }}"' $GITHUB_WORKSPACE/k8s/prod/deployment.yaml
+          git add $GITHUB_WORKSPACE/k8s/prod/deployment.yaml
           git commit -m "Update prod image to ${{ github.sha }}" || echo "No changes"
           git push
       - name: Inject Secret
