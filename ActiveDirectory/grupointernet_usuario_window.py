@@ -1,3 +1,5 @@
+#UI para consulta de pertenencia de grupo de usuario de dominio
+
 from ldap3 import Server, Connection, NTLM
 from tkinter import *
 
@@ -26,7 +28,7 @@ def consulta():
                 txt.delete(1.0,END)
                 txt.insert(END,"No posee acceso a Internet")
     
-    except IndexError: #If user doesn't exist
+    except IndexError: #Si user no existe
          txt.delete(1.0,END)
          txt.insert(END,"No existe el usuario")
 
