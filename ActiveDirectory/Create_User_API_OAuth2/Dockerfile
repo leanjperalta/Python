@@ -3,7 +3,7 @@ FROM python:3.12-slim
 # Install dependencies
 WORKDIR /app
 COPY . /app
-RUN pip install --no-cache-dir -r requirements.txt  # Assume you have a requirements.txt; create one with pip freeze if needed
+RUN pip install --no-cache-dir -r requirements.txt 
 
 # Expose port (adjust if your API uses a different port, e.g., 5000 for Flask)
 EXPOSE 8000
