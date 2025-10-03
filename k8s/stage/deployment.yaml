@@ -24,3 +24,8 @@ spec:
                 secretKeyRef:
                   name: api-secrets
                   key: lp_pass
+            - name: DDS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: dds_pass
