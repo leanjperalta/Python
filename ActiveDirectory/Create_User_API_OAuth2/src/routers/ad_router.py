@@ -25,12 +25,15 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         #seteo canonical name (no lo uso como atributo)
         cn_user=f"{user.new_user_name} {user.new_user_lastname}"
         #seteo sAMAccountname
-        sam_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}"
+        #sam_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}"
+        sam_user=f"{user.new_username}"
         #seteo UserPrincipalName
-        pn_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
+        #pn_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
+        pn_user=f"{user.new_username}@{domain_name}"
         #seteo casilla del usuario
-        mail_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
-
+        #mail_user=f"{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}"
+        mail_user=f"{user.new_username}@{domain_name}"
+        display_name=f"{user.new_user_name} {user.new_user_lastname}"
         #seteo distinguished name
         dn = f"CN={cn_user},{base_dn}"
 
@@ -56,6 +59,7 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
             #'uid': user.username,
             'userPrincipalName': pn_user,
             'mail': mail_user,
+            'displayName': display_name,
         }
      
         if not conn.add(dn, attributes=attrs):
@@ -64,12 +68,22 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         conn.extend.microsoft.modify_password(dn, enc_pwd)
         conn.modify(dn, {'userAccountControl': [('MODIFY_REPLACE', 512)]})
 
-        # lo agrego al grupo Domain Users, vía dn
+        # Add user to Domain Users group - skip if already exists
         domain_users_dn = f"CN=Domain Users,CN=Users,{','.join(base_dn.split(',')[1:])}"
-        conn.extend.microsoft.add_members_to_groups(dn, domain_users_dn)
-        # lo agrego al grupo Internet-General, vía dn
+        try:
+            conn.extend.microsoft.add_members_to_groups(dn, domain_users_dn)
+        except Exception as e:
+            if "entryAlreadyExists" not in str(e):  # ignore if already member
+                raise HTTPException(status_code=500, detail=f"Failed to add user to Domain Users: {str(e)}")
+            
+        # Add user to Internet-General group
         domain_group_dn = f"CN=Internet-General,{','.join(base_dn.split(',')[1:])}"
-        conn.extend.microsoft.add_members_to_groups(dn, domain_group_dn)
+        try:
+            success = conn.extend.microsoft.add_members_to_groups(dn, domain_group_dn)
+            if not success:
+                raise HTTPException(status_code=500, detail=f"Failed to add user to Internet-General: {conn.result}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error adding to Internet-General: {str(e)}")
 
         # Desconecto del servidor
         conn.unbind()
