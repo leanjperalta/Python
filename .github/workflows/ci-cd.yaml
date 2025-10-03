@@ -41,7 +41,7 @@ jobs:
           git push
       - name: Inject Secret
         run: |
-          kubectl create secret generic api-secrets --namespace=dev --from-literal=lp_pass="${{ secrets.LP_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic api-secrets --namespace=dev --from-literal=lp_pass="${{ secrets.LP_PASS }}" --from-literal=dds_pass="${{ secrets.DDS_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
 
   deploy-stage:
     needs: deploy-dev
@@ -65,7 +65,7 @@ jobs:
           git push
       - name: Inject Secret
         run: |
-          kubectl create secret generic api-secrets --namespace=stage --from-literal=lp_pass="${{ secrets.LP_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic api-secrets --namespace=stage --from-literal=lp_pass="${{ secrets.LP_PASS }}" --from-literal=dds_pass="${{ secrets.DDS_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
 
   deploy-prod:
     needs: deploy-stage
@@ -89,4 +89,4 @@ jobs:
           git push
       - name: Inject Secret
         run: |
-          kubectl create secret generic api-secrets --namespace=prod --from-literal=lp_pass="${{ secrets.LP_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic api-secrets --namespace=prod --from-literal=lp_pass="${{ secrets.LP_PASS }}" --from-literal=dds_pass="${{ secrets.DDS_PASS }}" --dry-run=client -o yaml | kubectl apply -f -
