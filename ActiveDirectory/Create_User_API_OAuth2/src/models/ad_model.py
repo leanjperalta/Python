@@ -11,7 +11,7 @@ class UserCreate(BaseModel):
             'example':{
                 'new_user_name':'Ana',
                 'new_user_lastname':'Perez',
-                'new_username':'anaperez'
+                'new_username':'aperez'
             }
         }
     }
