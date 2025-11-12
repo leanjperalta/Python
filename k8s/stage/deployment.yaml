@@ -13,6 +13,8 @@ spec:
       labels:
         app: create-user-api
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: knode1.garrahan.gov.ar
       containers:
         - name: api
           image: ghcr.io/leanjperalta/python-create-user-api:6151dec477cdd380fbf9d6b1197a154f873ec961
