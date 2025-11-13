@@ -17,7 +17,7 @@ spec:
         kubernetes.io/hostname: knode1.garrahan.gov.ar
       containers:
         - name: api
-          image: ghcr.io/leanjperalta/python-create-user-api:347650c55fc921902c0a129f2b505513bb7777e2
+          image: ghcr.io/leanjperalta/python-create-user-api:5efc68b9c370bfaecb494c96dd44b31bf64cb34c
           ports:
             - containerPort: 8000
           env:
