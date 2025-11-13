@@ -13,21 +13,41 @@ spec:
       labels:
         app: create-user-api
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: knode1.garrahan.gov.ar
       containers:
-        - name: api
-          image: ghcr.io/leanjperalta/python-create-user-api:347650c55fc921902c0a129f2b505513bb7777e2
-          ports:
-            - containerPort: 8000
-          env:
-            - name: LP_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: api-secrets
-                  key: lp_pass
-            - name: DDS_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: api-secrets
-                  key: dds_pass
+      - name: api
+        image: ghcr.io/leanjperalta/python-create-user-api:347650c55fc921902c0a129f2b505513bb7777e2
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        env:
+        - name: LP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: lp_pass
+        - name: DDS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: dds_pass
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
