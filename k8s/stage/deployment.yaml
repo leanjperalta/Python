@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/leanjperalta/python-create-user-api:66dd7a6a6f8e65c3d3b35ccb111665dc0273e2cb
+          image: ghcr.io/leanjperalta/python-create-user-api:fbdd736b531b5d30bc9831d8f5321ffa6f23e1b7
           ports:
             - containerPort: 8000
           env:
