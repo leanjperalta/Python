@@ -8,8 +8,8 @@ def create_user_attributes(user: UserCreate):
         'objectClass': ['top', 'person', 'organizationalPerson', 'user'],
         #'cn': f"{user.new_user_name} {user.new_user_middlename} {user.new_user_lastname}",
         'cn': f"{user.new_user_name} {user.new_user_lastname}",
-        'sAMAccountName': f"{user.new_user_name[:1].upper()}{user.new_user_lastname.lower()}",
-        'userPrincipalName': f'{user.new_user_name[:1].lower()}{user.new_user_lastname.lower()}@{domain_name}',
+        'sAMAccountName': f"{user.new_username.lower()}",
+        'userPrincipalName': f'{user.new_username.lower()}@{domain_name}',
         'userAccountControl': 514,  # Normal account
         'givenName': user.new_user_name,
         'sn': user.new_user_lastname,

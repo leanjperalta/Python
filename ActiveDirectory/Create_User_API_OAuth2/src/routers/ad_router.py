@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from ..models.ad_model import UserCreate #llamada al modelo UserCreate
 from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD
+from ldap3.utils.conv import escape_filter_chars
 from ..vars.conn_creds import *
 from ..ad.usercreate import create_user_attributes
 from pydantic import BaseModel
@@ -32,8 +33,13 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         #seteo distinguished name
         dn = f"CN={user.new_user_name} {user.new_user_lastname},{base_dn}"
 
-        user_exists = conn.search(dn, '(objectClass=user)', attributes=['*'])
-        if user_exists:
+        #verifico si el usuario ya existe buscando por cn con caracteres escapados
+        cn_value = f"{user.new_user_name} {user.new_user_lastname}"
+        escaped_cn = escape_filter_chars(cn_value)
+        filter_str = f"(&(objectClass=user)(cn={escaped_cn}))"
+        
+        conn.search(root_dn, filter_str, attributes=['*'])
+        if conn.entries:
             return JSONResponse(status_code=500, content={"status": "error", "message": "LDAP error: El usuario ya existe"})
 
         #genero un password random de 8 char (letras, numeros y puntuación)
@@ -45,11 +51,23 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         #creo los atributos del usuario
         attrs = create_user_attributes(user)
 
-        if not conn.add(dn, attributes=attrs):
-            raise HTTPException(status_code=404, detail=f"Error al agregar usuario: {conn.result}")
+        # Intentar agregar usuario
+        try:
+            add_result = conn.add(dn, attributes=attrs)
+            if not add_result:
+                raise HTTPException(status_code=404, detail=f"Error al agregar usuario: {conn.result}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error en conn.add(): {str(e)} - {conn.result}")
         
-        conn.extend.microsoft.modify_password(dn, enc_pwd) #seteo el password generado
-        conn.modify(dn, {'userAccountControl': [('MODIFY_REPLACE', 512)]})
+        try:
+            conn.extend.microsoft.modify_password(dn, enc_pwd)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error al establecer contraseña: {str(e)}")
+        
+        try:
+            conn.modify(dn, {'userAccountControl': [('MODIFY_REPLACE', 512)]})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error al activar usuario: {str(e)}")
 
         # Agrego usuario al grupo Domain Users
         domain_users_dn = f"CN=Domain Users,CN=Users,{','.join(base_dn.split(',')[1:])}"
