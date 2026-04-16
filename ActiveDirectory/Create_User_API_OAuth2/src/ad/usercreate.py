@@ -1,5 +1,5 @@
-from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD, MODIFY_REPLACE
-from fastapi import HTTPException
+#from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD, MODIFY_REPLACE
+#from fastapi import HTTPException
 from src.vars.conn_creds import *
 from src.models.ad_model import UserCreate
 

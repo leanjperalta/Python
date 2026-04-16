@@ -38,7 +38,7 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         conn.search(root_dn, filter_str, attributes=['*'])
         if conn.entries:
         #    return JSONResponse(status_code=500, content={"status": "error", "message": "LDAP error: El usuario ya existe"})
-            cn_value = f"{user.new_user_name} {user.new_user_lastname} {user.new_username}"
+            cn_value = f"{cn_value} {user.new_username}"
 
         #creo los atributos del usuario
         attrs = create_user_attributes(user, cn_value)
