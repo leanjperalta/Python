@@ -3,11 +3,12 @@ from fastapi import HTTPException
 from src.vars.conn_creds import *
 from src.models.ad_model import UserCreate
 
-def create_user_attributes(user: UserCreate):
+def create_user_attributes(user: UserCreate, cn_value: str):
     return {
         'objectClass': ['top', 'person', 'organizationalPerson', 'user'],
         #'cn': f"{user.new_user_name} {user.new_user_middlename} {user.new_user_lastname}",
-        'cn': f"{user.new_user_name} {user.new_user_lastname}",
+        # 'cn': f"{user.new_user_name} {user.new_user_lastname}",
+        'cn': cn_value,
         'sAMAccountName': f"{user.new_username.lower()}",
         'userPrincipalName': f'{user.new_username.lower()}@{domain_name}',
         'userAccountControl': 514,  # Normal account

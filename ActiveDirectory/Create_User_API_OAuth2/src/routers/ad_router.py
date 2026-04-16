@@ -30,9 +30,6 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         if not conn.bind():
             raise Exception(f"Falló conexión a servidor LDAP: {conn.result}")
 
-        #seteo distinguished name
-        dn = f"CN={user.new_user_name} {user.new_user_lastname},{base_dn}"
-
         #verifico si el usuario ya existe buscando por cn con caracteres escapados
         cn_value = f"{user.new_user_name} {user.new_user_lastname}"
         escaped_cn = escape_filter_chars(cn_value)
@@ -40,18 +37,17 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         
         conn.search(root_dn, filter_str, attributes=['*'])
         if conn.entries:
-            return JSONResponse(status_code=500, content={"status": "error", "message": "LDAP error: El usuario ya existe"})
-
-        #genero un password random de 8 char (letras, numeros y puntuación)
-        password_length = 8
-        password_characters = string.ascii_letters + string.digits + string.punctuation
-        userpassword = ''.join(random.choice(password_characters) for _ in range(password_length))
-        enc_pwd = '"{}"'.format(userpassword).encode('utf-16-le')
+        #    return JSONResponse(status_code=500, content={"status": "error", "message": "LDAP error: El usuario ya existe"})
+            cn_value = f"{user.new_user_name} {user.new_user_lastname} {user.new_username}"
 
         #creo los atributos del usuario
-        attrs = create_user_attributes(user)
+        attrs = create_user_attributes(user, cn_value)
 
         # Intentar agregar usuario
+      
+        #seteo distinguished name
+        dn = f"CN={cn_value},{base_dn}"
+      
         try:
             add_result = conn.add(dn, attributes=attrs)
             if not add_result:
@@ -59,6 +55,12 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error en conn.add(): {str(e)} - {conn.result}")
         
+        #genero un password random de 8 char (letras, numeros y puntuación)
+        password_length = 8
+        password_characters = string.ascii_letters + string.digits + string.punctuation
+        userpassword = ''.join(random.choice(password_characters) for _ in range(password_length))
+        enc_pwd = '"{}"'.format(userpassword).encode('utf-16-le')
+
         try:
             conn.extend.microsoft.modify_password(dn, enc_pwd)
         except Exception as e:
