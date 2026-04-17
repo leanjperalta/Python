@@ -57,7 +57,7 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         
         #genero un password random de 8 char (letras, numeros y puntuación)
         password_length = 8
-        password_characters = string.ascii_letters + string.digits + string.punctuation
+        password_characters = string.ascii_letters + string.digits + string.punctuation + string.ascii_letters.upper()
         userpassword = ''.join(random.choice(password_characters) for _ in range(password_length))
         enc_pwd = '"{}"'.format(userpassword).encode('utf-16-le')
 
