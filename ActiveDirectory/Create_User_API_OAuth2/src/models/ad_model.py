@@ -16,5 +16,15 @@ class UserCreate(BaseModel):
         }
     }
      
-
-    
+class UserPasswordChange(BaseModel):
+    username: str = Field(min_length=3, max_length=30)
+    new_user_password: str = Field(min_length=8, max_length=128)
+        
+    model_config = {    #Añado dentro del esquema valores por defecto en vez de hacerlo en Field()
+        'json_schema_extra':{
+            'example':{
+                'username':'aperez',
+                'new_user_password':'P@ssw0rd123'
+            }
+        }
+    }

@@ -2,18 +2,20 @@ from .auth import oauth2_scheme, login
 from fastapi.security import OAuth2PasswordRequestForm  # Add this import
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from ..models.ad_model import UserCreate #llamada al modelo UserCreate
-from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD
+from ..models.ad_model import UserCreate, UserPasswordChange #llamada al modelo UserCreate
+from ldap3 import Server, Connection, ALL, NTLM, MODIFY_ADD, Tls
 from ldap3.utils.conv import escape_filter_chars
+from ldap3.extend.microsoft.modifyPassword import ad_modify_password
 from ..vars.conn_creds import *
 from ..ad.usercreate import create_user_attributes
 from pydantic import BaseModel
 import string, random
+import ssl
 
 
 aduser_router = APIRouter() #este router va a contener la ruta para crear un usuario
 
-class CreateUserResponse(BaseModel):
+class UserResponse(BaseModel):
     status: str
     message: str
 
@@ -21,7 +23,7 @@ class CreateUserResponse(BaseModel):
 async def token(form_data: OAuth2PasswordRequestForm = Depends()):
     return await login(form_data)
 
-@aduser_router.post("/create_user", status_code=201, response_model=CreateUserResponse)
+@aduser_router.post("/create_user", status_code=201, response_model=UserResponse)
 def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
     try:
         server = Server(server_name, get_info=ALL)
@@ -92,5 +94,43 @@ def create_user(user: UserCreate, token: str = Depends(oauth2_scheme)):
         conn.unbind()
 
         return {"status": "success",  "message": f"Usuaria/o {user.new_user_name} {user.new_user_lastname} creada/o satisfactoriamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@aduser_router.post("/mod_pass", status_code=201, response_model=UserResponse)
+def change_password(user: UserPasswordChange, token: str = Depends(oauth2_scheme)):
+    try:
+        tls_config = Tls(validate=ssl.CERT_NONE)
+        server = Server(server_name, get_info=ALL, tls=tls_config)
+        conn = Connection(server, user=f'{domain_name}\\{admin_user}', password=admin_password, authentication=NTLM)
+        
+        if not conn.bind():
+            raise Exception(f"Falló conexión a servidor LDAP: {conn.result}")
+        
+        conn.start_tls()  # Upgrade a conexión cifrada para modificar contraseña
+            
+        
+        # Busco el usuario por sAMAccountName
+        safe_username = escape_filter_chars(user.username)
+        conn.search(root_dn, search_filter=f"(&(objectClass=user)(sAMAccountName={safe_username}))", attributes=['distinguishedName'])
+        
+        if not conn.entries:
+            print(f"Bind failed: {conn.result}")
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        user_dn = conn.entries[0].distinguishedName.value
+        #print(user_dn)
+        
+        #ad_modify_passwd_result = conn.extend.microsoft.modify_password(user_dn, user.new_user_password)
+        result = ad_modify_password(conn, user_dn, user.new_user_password, None)
+        if not result:
+            raise HTTPException(status_code=500, detail=f"Error al modificar contraseña: {conn.result}")
+        
+        conn.unbind()
+        return {"status": "success", "message": f"Contraseña de {user.username} modificada satisfactoriamente"}
+    
+    except HTTPException:
+        raise
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

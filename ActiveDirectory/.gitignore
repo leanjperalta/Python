@@ -1,2 +1,4 @@
 **/__pycache__
 /Create_User_API_OAuth2/src/vars/conn_creds.py
+/ActiveDirectory/Create_User_API_OAuth2/venv/
+/ActiveDirectory/Create_User_API_OAuth2/pyrightconfig.json
